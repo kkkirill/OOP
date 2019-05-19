@@ -48,11 +48,11 @@ public class Drawer extends Application {
     }
 
     void generateRandomLines(int pointsAmount) {
-        int startX = random.nextInt(514), endX;
-        int startY = random.nextInt(560), endY;
+        int startX = random.nextInt(510), endX;
+        int startY = random.nextInt(555), endY;
         for (int i = 0; i < pointsAmount - 1; i++) {
-            endX = random.nextInt(514);
-            endY = random.nextInt(560);
+            endX = random.nextInt(510);
+            endY = random.nextInt(555);
             model.addLine(new Line(startX, startY, endX, endY));
             startX = endX;
             startY = endY;
