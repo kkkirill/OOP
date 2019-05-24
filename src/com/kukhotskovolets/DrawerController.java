@@ -9,11 +9,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class DrawerController implements Initializable {
-
 
     public Spinner<Integer> pointsSpinner;
     public Label pointsSpinnerLabel;
@@ -26,6 +26,7 @@ public class DrawerController implements Initializable {
     public Canvas canvas;
     public Button clearButton;
     public Rectangle coordinatePlane;
+    public ToggleButton fileInputButton;
     private GraphicsContext graphicsContext;
 
     private DrawerModel drawerModel;
@@ -34,6 +35,7 @@ public class DrawerController implements Initializable {
     private final int CANVASWIDTH = 516; //505
     private final int CANVASHEIGHT = 562; //552
     private final int step = 50;
+
 
     void initModel(DrawerModel drawerModel) {
         this.drawerModel = drawerModel;
@@ -66,7 +68,7 @@ public class DrawerController implements Initializable {
         drawRectangleLines();
         drawButton.setOnAction(event -> {
             clear();
-            mainApp.generateRandomLines(pointsSpinner.getValue());
+            mainApp.generateRandomLines(fileInputButton.isSelected() ? -1 : pointsSpinner.getValue());
             draw();
         });
         clearButton.setOnAction(event -> clear());
@@ -75,13 +77,13 @@ public class DrawerController implements Initializable {
     private void drawRectangleLines() {
         double linewidth = graphicsContext.getLineWidth();
         graphicsContext.setLineWidth(0.8);
-        for (int i = 0; i < CANVASHEIGHT; i+=step) {
+        for (int i = 0; i < CANVASHEIGHT; i += step) {
             graphicsContext.strokeLine(0, i, 7, i);
             if (i % step == 0 && i != 0) {
                 graphicsContext.strokeText(Integer.toString(i), 9, i + 5, 15);
             }
         }
-        for (int j = 0; j < CANVASWIDTH; j+=step) {
+        for (int j = 0; j < CANVASWIDTH; j += step) {
             graphicsContext.strokeLine(j, 0, j, 7);
             if (j % step == 0 && j != 0) {
                 graphicsContext.strokeText(Integer.toString(j), j - 7, 20, 15);
@@ -91,8 +93,7 @@ public class DrawerController implements Initializable {
     }
 
     private void clear() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        pointsSpinner.getValueFactory().setValue(2);
         drawerModel.clear();
         outputWindow.clear();
         graphicsContext.clearRect(0, 0, CANVASWIDTH, CANVASHEIGHT);
@@ -100,23 +101,42 @@ public class DrawerController implements Initializable {
     }
 
     private void draw() {
-        drawerModel.getPoints().forEach(point2D -> System.out.println(point2D.getX() + " " + point2D.getY()));
+        if (fileInputButton.isSelected()) {
+            final StringBuilder stringBuilder = new StringBuilder();
+            drawerModel.getPoints().forEach(point2D -> stringBuilder.append(String.format("%f %f\n", point2D.getX(), point2D.getY())));
+            try {
+                mainApp.writeToFile(stringBuilder.toString(), false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            drawerModel.getPoints().forEach(point2D -> System.out.println(point2D.getX() + " " + point2D.getY()));
+        }
         drawerModel.getLines().forEach((line2D) -> {
             graphicsContext.strokeOval(line2D.getStartX(), line2D.getStartY(), 2, 2);
             graphicsContext.strokeOval(line2D.getEndX(), line2D.getEndY(), 2, 2);
             graphicsContext.strokeLine(line2D.getStartX(), line2D.getStartY(), line2D.getEndX(), line2D.getEndY());
         });
-        showResults();
+        showResults(fileInputButton.isSelected());
     }
 
-    private void showResults() {
+    private void showResults(boolean isFileOutput) {
         double totalLength, maxLength;
         totalLength = mainApp.getTotalLength();
         maxLength = mainApp.maxLineLength();
         Line line = mainApp.maxLine();
-        String output = String.format("Max line cords:\n(%.0f, %.0f) (%.0f, %.0f)\nMax length:\n%f\nTotal length:\n%f\n",
+        String output = String.format("Max line cords:\n(%.0f, %.0f) (%.0f, %.0f)\nMax length:\n%f\nTotal length:\n%f\n\n",
                 line.getStartX(), line.getStartY(), line.getEndX(), line.getEndY(), maxLength, totalLength);
         outputWindow.setText(output);
-        System.out.println("\n" + output);
+        if (isFileOutput) {
+            try {
+                mainApp.writeToFile(output, true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            System.out.println("\n" + output);
+        }
     }
 }

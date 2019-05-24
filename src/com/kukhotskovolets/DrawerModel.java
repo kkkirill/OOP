@@ -7,6 +7,10 @@ import java.util.HashSet;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
+interface FileSystemReadLayer {
+
+}
+
 class DrawerModel {
 
     private final HashSet<Line> lines = new HashSet<>();

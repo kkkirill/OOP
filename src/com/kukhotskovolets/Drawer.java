@@ -5,7 +5,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.Random;
 
 import static java.lang.Math.pow;
@@ -18,6 +19,13 @@ public class Drawer extends Application {
     private DrawerModel model;
 
     private Random random;
+
+    private DrawerController drawerController;
+
+    private final String READFILE = "inputData.txt";
+    private final String OUTPUTFILE = "outputData.txt";
+    private final String TOTALOUTPUTFILE = "totalOutputData.txt";
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -37,17 +45,45 @@ public class Drawer extends Application {
             loader.setLocation(getClass().getResource("scene.fxml"));
             Scene scene = new Scene(loader.load());
             primaryStage.setScene(scene);
-            DrawerController drawerController = loader.getController();
+            drawerController = loader.getController();
             drawerController.setMainApp(this);
             drawerController.initModel(model);
-
             primaryStage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private int readFromFile() throws IOException {
+        BufferedReader fileReader = new BufferedReader(new FileReader(new File(READFILE)));
+        int temp = Integer.valueOf(fileReader.readLine());
+        fileReader.close();
+        return temp;
+    }
+
+    void writeToFile(String line, boolean isTotalOutput) throws IOException {
+        if (isTotalOutput) {
+            BufferedWriter fileWriter = new BufferedWriter(new FileWriter(new File(OUTPUTFILE)));
+            fileWriter.write(line);
+            fileWriter.close();
+        }
+        BufferedWriter fileTotalWriter = new BufferedWriter(new FileWriter(new File(TOTALOUTPUTFILE), true));
+        fileTotalWriter.append(line);
+        fileTotalWriter.close();
+    }
+
     void generateRandomLines(int pointsAmount) {
+        if (pointsAmount < 0) {
+            try {
+                pointsAmount = readFromFile();
+                if (pointsAmount < 2) {
+                    pointsAmount = 2;
+                }
+            } catch (IOException e) {
+                pointsAmount = 2;
+            }
+            drawerController.pointsSpinner.getValueFactory().setValue(pointsAmount);
+        }
         int startX = random.nextInt(510), endX;
         int startY = random.nextInt(555), endY;
         for (int i = 0; i < pointsAmount - 1; i++) {
